@@ -32,6 +32,9 @@ class ScriptConfigSocket(tornado.websocket.WebSocketHandler):
     user: User
     config_mode: ConfigModel
 
+    def check_origin(self, origin):
+        return True
+
     # noinspection PyTypeChecker
     def __init__(self, application, request, **kwargs):
         super().__init__(application, request, **kwargs)

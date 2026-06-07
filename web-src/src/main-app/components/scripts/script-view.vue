@@ -22,7 +22,7 @@
       <div v-if="schedulable" class="button-gap"></div>
       <ScheduleButton v-if="schedulable" :disabled="!enableScheduleButton" @click="openSchedule"/>
     </div>
-    <LogPanel v-show="showLog && !hasErrors && !hideExecutionControls" ref="logPanel" :outputFormat="outputFormat"/>
+    <LogPanel v-show="showLog && !hasErrors && !hideExecutionControls" ref="logPanel" :outputFormat="outputFormat" :inputPromptText="inputPromptText" @user-input="handleUserInput"/>
     <LogPanel v-if="preloadOutput && !showLog && !hasErrors && !hideExecutionControls"
               ref="preloadOutputPanel"
               :output-format="preloadOutputFormat"/>
@@ -312,6 +312,10 @@ export default {
       } else {
         this.$store.dispatch('executions/' + this.currentExecutor.state.id + '/stopExecution');
       }
+    },
+
+    handleUserInput(value) {
+      this.sendUserInput(value);
     },
 
     sendUserInput(value) {

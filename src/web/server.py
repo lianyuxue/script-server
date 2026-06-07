@@ -258,6 +258,9 @@ class ScriptKill(BaseRequestHandler):
 
 
 class ScriptStreamSocket(tornado.websocket.WebSocketHandler):
+    def check_origin(self, origin):
+        return True
+
     def __init__(self, application, request, **kwargs):
         super().__init__(application, request, **kwargs)
 

@@ -3,12 +3,13 @@
     <h2 v-show="selectedScript" class="header">{{ selectedScript }}</h2>
     <ExecutionInstanceTabs/>
     <div class="spacer"></div>
-    <button class="button-history btn btn-flat"
+    <button v-if="selectedScript"
+            class="button-history btn btn-flat"
             @click="openParameterHistory"
             title="Parameter History">
       <i class="material-icons">history</i>
     </button>
-    <ParameterHistoryModal ref="parameterHistoryModal" :scriptName="selectedScript" @use-parameters="handleUseParameters"/>
+    <ParameterHistoryModal v-if="selectedScript" ref="parameterHistoryModal" :scriptName="selectedScript" @use-parameters="handleUseParameters"/>
   </div>
 </template>
 
