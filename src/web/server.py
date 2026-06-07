@@ -121,6 +121,11 @@ class BaseStaticHandler(tornado.web.StaticFileHandler):
     def set_default_headers(self):
         self.set_header('X-Frame-Options', 'DENY')
 
+    def set_extra_headers(self, path):
+        super().set_extra_headers(path)
+        if path.lower().endswith('.html'):
+            self.set_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+
 
 class GetServerConf(BaseRequestHandler):
     @check_authorization

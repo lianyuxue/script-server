@@ -2,8 +2,10 @@
   <div v-trim-text
        :class="{'margin-top': !!separator.title}"
        class="parameter-separator">
-    <h6 v-if="separator.title">{{ separator.title }}</h6>
-    <div v-if="separator.type === 'line'" class="separator-line"/>
+    <div v-if="separator.title" class="separator-title">
+      <h6>{{ separator.title }}</h6>
+    </div>
+    <div v-if="separator.type === 'line'" class="separator-line"></div>
   </div>
 </template>
 
@@ -22,21 +24,32 @@ export default {
 .parameter-separator {
   display: flex;
   align-items: center;
-  min-height: 1.3rem;
+  min-height: 1.5rem;
+  gap: 12px;
 }
 
 .margin-top {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
-.parameter-separator h6 {
-  margin-right: 16px;
+.separator-title h6 {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--primary-color);
+  background: rgba(38, 166, 154, 0.08);
+  border-radius: 4px;
+  padding: 2px 8px;
+  white-space: nowrap;
 }
 
 .separator-line {
-  height: 1px;
-  border-top: 1px solid var(--separator-color);
   flex: 1 1 0;
+  height: 1px;
+  background: linear-gradient(to right, var(--separator-color), transparent);
 }
+
 </style>

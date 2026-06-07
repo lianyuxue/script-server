@@ -54,8 +54,10 @@ export default {
     const currentPath = this.$router.currentRoute.path;
     this.$refs.appLayout.setSidebarVisibility(isEmptyString(currentPath) || (currentPath === '/'));
 
-    this.$router.afterEach((to) => {
-      this.$refs.appLayout.setSidebarVisibility(false);
+    this.$router.afterEach(() => {
+      if (this.$refs.appLayout.isNarrowView()) {
+        this.$refs.appLayout.setSidebarVisibility(false);
+      }
     });
   }
 }

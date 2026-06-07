@@ -1,14 +1,17 @@
 <template>
   <div class="app-layout">
-    <div ref="appSidebar" :class="{collapsed: !showSidebar}" class="app-sidebar shadow-8dp">
-      <slot name="sidebar"/>
+    <div ref="appSidebar" :class="{collapsed: !showSidebar}" class="app-sidebar-outer">
+      <div class="app-sidebar shadow-8dp">
+        <slot name="sidebar"/>
+      </div>
     </div>
+    <a :class="{collapsed: !showSidebar}" :title="showSidebar ? '隐藏菜单' : '展开菜单'"
+       class="sidebar-toggle-button" @click="toggleSidebar">
+      <i class="material-icons">{{ showSidebar ? 'chevron_left' : 'chevron_right' }}</i>
+    </a>
     <div class="app-content">
       <div ref="contentHeader"
            :class="{borderless: !hasHeader, 'shadow-8dp': hasHeader}" class="content-header">
-        <a class="btn-flat app-menu-button" @click="setSidebarVisibility(true)">
-          <i class="material-icons">menu</i>
-        </a>
         <slot name="header"/>
         <div v-if="loading" class="progress">
           <div class="indeterminate"></div>
@@ -18,7 +21,7 @@
         <slot name="content"/>
       </div>
     </div>
-    <div v-show="showSidebar" class="sidenav-overlay" @click="setSidebarVisibility(false)"></div>
+    <div v-show="showSidebar && narrowView" class="sidenav-overlay" @click="setSidebarVisibility(false)"></div>
   </div>
 </template>
 
@@ -44,14 +47,16 @@ export default {
 
     updatedStylesBasedOnContent(contentHeader, contentPanel, this);
 
-    const sidebarStyle = getComputedStyle(this.$refs.appSidebar);
-
     const resizeListener = () => {
-      const position = sidebarStyle.position;
-      if (!this.narrowView) {
+      const position = getComputedStyle(this.$refs.appSidebar).position;
+      const wasNarrow = this.narrowView;
+      this.narrowView = position === 'absolute';
+
+      if (wasNarrow && !this.narrowView) {
+        this.setSidebarVisibility(true);
+      } else if (!wasNarrow && this.narrowView) {
         this.setSidebarVisibility(false);
       }
-      this.narrowView = position === 'absolute';
     };
     window.addEventListener('resize', resizeListener);
     resizeListener();
@@ -60,6 +65,14 @@ export default {
   methods: {
     setSidebarVisibility(visible) {
       this.showSidebar = visible;
+    },
+
+    toggleSidebar() {
+      this.showSidebar = !this.showSidebar;
+    },
+
+    isNarrowView() {
+      return this.narrowView;
     }
   }
 }
@@ -71,10 +84,6 @@ function recalculateHeight(contentHeader, appLayout, contentPanel) {
 
   let childrenHeight = 0;
   for (const child of Array.from(contentHeader.childNodes)) {
-    if (hasClass(child, 'app-menu-button')) {
-      continue;
-    }
-
     if ((child.nodeType === 1) && (window.getComputedStyle(child).position === 'absolute')) {
       continue;
     }
@@ -112,16 +121,68 @@ function updatedStylesBasedOnContent(contentHeader, contentPanel, appLayout) {
 
 <style scoped>
 .app-layout {
+  position: relative;
   display: flex;
   height: 100vh;
   max-height: 100vh;
 }
 
-.app-sidebar {
+.app-sidebar-outer {
+  position: relative;
   width: 300px;
   min-width: 300px;
+  flex-shrink: 0;
+  transition: width 0.3s, min-width 0.3s, transform 0.3s;
+}
 
+.app-sidebar-outer.collapsed {
+  width: 0;
+  min-width: 0;
+}
+
+.app-sidebar {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   border-right: 1px solid var(--separator-color);
+}
+
+.app-sidebar-outer.collapsed .app-sidebar {
+  border-right: none;
+}
+
+.sidebar-toggle-button {
+  position: absolute;
+  top: 50%;
+  left: 286px;
+  transform: translateY(-50%);
+  z-index: 1001;
+  transition: left 0.3s;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 48px;
+
+  color: var(--font-color-main);
+  background: var(--background-color);
+  border: 1px solid var(--separator-color);
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+}
+
+.sidebar-toggle-button.collapsed {
+  left: 0;
+}
+
+.sidebar-toggle-button:hover {
+  background: var(--script-header-background);
+}
+
+.sidebar-toggle-button > i {
+  font-size: 1.25rem;
 }
 
 .app-content {
@@ -131,26 +192,6 @@ function updatedStylesBasedOnContent(contentHeader, contentPanel, appLayout) {
   flex-direction: column;
 
   width: 100vw;
-}
-
-.app-menu-button {
-  display: none;
-
-  float: left;
-  position: relative;
-  z-index: 1;
-  margin-top: 12px;
-  text-align: center;
-  color: var(--font-color-main);
-}
-
-.app-menu-button:hover {
-  background: none;
-}
-
-.app-menu-button > i {
-  font-size: 2rem;
-  line-height: 1;
 }
 
 .content-header {
@@ -181,20 +222,19 @@ function updatedStylesBasedOnContent(contentHeader, contentPanel, appLayout) {
 }
 
 @media (max-width: 992px) {
-  .content-header {
-    padding-left: 0;
-  }
-
-  .app-sidebar {
+  .app-sidebar-outer {
     position: absolute;
     height: 100vh;
     z-index: 999;
-    transition: transform 0.3s;
+    width: 300px;
+    min-width: 300px;
   }
 
-  .app-sidebar.collapsed {
+  .app-sidebar-outer.collapsed {
     -webkit-transform: translateX(-105%);
     transform: translateX(-105%);
+    width: 300px;
+    min-width: 300px;
   }
 
   .sidenav-overlay {
@@ -205,11 +245,6 @@ function updatedStylesBasedOnContent(contentHeader, contentPanel, appLayout) {
     z-index: 500;
     width: 100%;
     height: 100%;
-  }
-
-  .app-menu-button {
-    display: block;
-    margin-right: 12px;
   }
 }
 </style>

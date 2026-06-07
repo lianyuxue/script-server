@@ -51,7 +51,9 @@ export default {
 
       if (!this.$refs.logPanel) {
         this.$nextTick(() => {
-          this.$refs.logPanel.setLog(log);
+          if (this.$refs.logPanel) {
+            this.$refs.logPanel.setLog(log);
+          }
         });
       } else {
         this.$refs.logPanel.setLog(log);
