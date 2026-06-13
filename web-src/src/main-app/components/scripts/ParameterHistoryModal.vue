@@ -60,7 +60,7 @@ import { loadParameterHistory, removeParameterHistoryEntry, toggleFavoriteEntry 
 export default {
   name: 'ParameterHistoryModal',
   props: {
-    scriptName: { type: String, required: true }
+    scriptName: { type: String, required: false, default: null }
   },
   data() {
     return { history: [], useHistoricalValues: false }
@@ -75,6 +75,10 @@ export default {
   },
   methods: {
     loadHistory() {
+      if (!this.scriptName) {
+        this.history = [];
+        return;
+      }
       this.history = loadParameterHistory(this.scriptName);
     },
     
@@ -94,6 +98,7 @@ export default {
     },
     
     removeEntry(index) {
+      if (!this.scriptName) return;
       removeParameterHistoryEntry(this.scriptName, index);
       this.loadHistory();
     },

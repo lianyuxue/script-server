@@ -64,7 +64,7 @@ export default {
   height: 100%;
 
   background: var(--background-color);
-  padding: 16px 24px 12px;
+  padding: 12px 16px;
 
   display: flex;
   flex-direction: column;

@@ -7,16 +7,63 @@ module.exports = {
     outputDir: '../web',
 
     devServer: {
+        port: 8080,
+        https: false,
+        hot: true,
+        liveReload: true,
         proxy: {
-            '': {
-                target: 'http://localhost:5000'
+            '/api': {
+                target: 'http://127.0.0.1:5001',
+                changeOrigin: true,
+                logLevel: 'debug'
             },
-            '/': {
-                target: 'ws://localhost:5000',
+            '/scripts': {
+                target: 'http://127.0.0.1:5001',
+                changeOrigin: true,
                 ws: true,
-                headers: {
-                    Origin: 'http://localhost:5000'
+                logLevel: 'debug',
+                onProxyRes: function (proxyRes, req, res) {
+                    proxyRes.on('error', function (err) {
+                        console.error('Proxy Res Error:', err);
+                    });
+                },
+                onError: function (err, req, res) {
+                    console.error('Proxy Error:', err);
                 }
+            },
+            '/logs': {
+                target: 'http://127.0.0.1:5001',
+                changeOrigin: true,
+                logLevel: 'debug'
+            },
+            '/auth': {
+                target: 'http://127.0.0.1:5001',
+                changeOrigin: true,
+                logLevel: 'debug'
+            },
+            '/theme': {
+                target: 'http://127.0.0.1:5001',
+                changeOrigin: true,
+                logLevel: 'debug'
+            },
+            '/conf': {
+                target: 'http://127.0.0.1:5001',
+                changeOrigin: true,
+                logLevel: 'debug'
+            },
+            '/executions': {
+                target: 'http://127.0.0.1:5001',
+                ws: true,
+                changeOrigin: true,
+                logLevel: 'debug',
+                onError: function (err, req, res) {
+                    console.error('Proxy Error (executions):', err);
+                }
+            },
+            '/history': {
+                target: 'http://127.0.0.1:5001',
+                changeOrigin: true,
+                logLevel: 'debug'
             }
         }
     },

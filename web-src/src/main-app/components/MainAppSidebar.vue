@@ -40,6 +40,7 @@
         <i class="material-icons primary-color-text">power_settings_new</i>
       </a>
     </div>
+
   </div>
 </template>
 
@@ -134,6 +135,7 @@ export default {
 .header-link {
   margin: 0 1rem;
   display: flex;
+  align-items: center;
   line-height: 0;
 }
 
