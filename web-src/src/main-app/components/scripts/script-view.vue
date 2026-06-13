@@ -98,14 +98,36 @@
 
           <div v-if="inputPromptText"
                v-show="!hideExecutionControls"
-               class="script-input-panel input-field">
-            <label :for="'inputField-' + id" class="script-input-label">{{ inputPromptText }}</label>
-            <input :id="'inputField-' + id"
-                   ref="inputField"
-                   class="script-input-field"
-                   type="text"
-                   v-on:keyup="inputKeyUpHandler">
-          </div>
+               class="script-input-panel">
+            <div class="input-outer-wrapper">
+              <div class="input-wrapper linux-input-wrapper">
+                <span class="linux-prompt">$</span>
+                <input :id="'inputField-' + id"
+                       ref="inputField"
+                       class="script-input-field"
+                       type="text"
+                       @keydown.up.prevent="navigateHistory('up')"
+                       @keydown.down.prevent="navigateHistory('down')"
+                       @input="handleInputChange"
+                       @keyup.enter="submitManualInput">
+                <div class="action-buttons">
+                   <button class="send-button waves-effect waves-light" @click="submitManualInput" title="发送 (Enter)">
+                     <i class="material-icons">send</i>
+                   </button>
+                   <div class="divider-vertical"></div>
+                   <a class="action-button waves-effect waves-circle" @click="copyLogToClipboard" title="复制日志">
+                     <i class="material-icons">content_copy</i>
+                   </a>
+                   <a class="action-button waves-effect waves-circle" @click="downloadLog" title="下载日志">
+                     <i class="material-icons">file_download</i>
+                   </a>
+                   <a class="action-button waves-effect waves-circle" @click="toggleFullscreen" title="全屏查看">
+                     <i class="material-icons">fullscreen</i>
+                   </a>
+                 </div>
+               </div>
+             </div>
+           </div>
         </main>
       </div>
     </template>
@@ -140,7 +162,10 @@ export default {
       lastInlineImages: {},
       scheduleMode: false,
       scriptConfigComponentsHeight: 0,
-      parametersExpanded: true
+      parametersExpanded: true,
+      commandHistory: [],
+      historyIndex: -1,
+      currentInputDraft: ''
     }
   },
 
@@ -333,11 +358,70 @@ export default {
   methods: {
     inputKeyUpHandler: function (event) {
       if (event.keyCode === 13) {
-        const inputField = this.$refs.inputField;
+        this.submitManualInput();
+      }
+    },
 
-        this.sendUserInput(inputField.value);
+    submitManualInput: function () {
+      const inputField = this.$refs.inputField;
+      const value = inputField.value;
 
-        inputField.value = '';
+      if (!value || !value.trim()) {
+        return;
+      }
+
+      const trimmedValue = value.trim();
+      this.handleUserInput(trimmedValue);
+
+      // 保存到历史记录
+      if (this.commandHistory[this.commandHistory.length - 1] !== trimmedValue) {
+        this.commandHistory.push(trimmedValue);
+      }
+      this.historyIndex = -1;
+      this.currentInputDraft = '';
+
+      inputField.value = '';
+    },
+
+    navigateHistory: function (direction) {
+      if (this.commandHistory.length === 0) return;
+
+      if (this.historyIndex === -1) {
+        this.currentInputDraft = this.$refs.inputField.value;
+      }
+
+      if (direction === 'up') {
+        if (this.historyIndex === -1) {
+          this.historyIndex = this.commandHistory.length - 1;
+        } else if (this.historyIndex > 0) {
+          this.historyIndex--;
+        }
+      } else if (direction === 'down') {
+        if (this.historyIndex !== -1) {
+          if (this.historyIndex < this.commandHistory.length - 1) {
+            this.historyIndex++;
+          } else {
+            this.historyIndex = -1;
+          }
+        }
+      }
+
+      if (this.historyIndex === -1) {
+        this.$refs.inputField.value = this.currentInputDraft;
+      } else {
+        this.$refs.inputField.value = this.commandHistory[this.historyIndex];
+      }
+
+      // 将光标移到末尾
+      this.$nextTick(() => {
+        const input = this.$refs.inputField;
+        input.selectionStart = input.selectionEnd = input.value.length;
+      });
+    },
+
+    handleInputChange: function () {
+      if (this.historyIndex === -1) {
+        this.currentInputDraft = this.$refs.inputField.value;
       }
     },
 
@@ -399,6 +483,24 @@ export default {
 
     handleUserInput(value) {
       this.sendUserInput(value);
+    },
+
+    copyLogToClipboard: function () {
+      if (this.$refs.logPanel) {
+        this.$refs.logPanel.copyLogToClipboard();
+      }
+    },
+
+    downloadLog: function () {
+      if (this.$refs.logPanel) {
+        this.$refs.logPanel.downloadLog();
+      }
+    },
+
+    toggleFullscreen: function () {
+      if (this.$refs.logPanel) {
+        this.$refs.logPanel.toggleFullscreen();
+      }
     },
 
     sendUserInput(value) {
@@ -865,21 +967,123 @@ export default {
   border-top: 1px solid var(--separator-color);
 }
 
-.script-input-panel input[type=text] {
-  margin: 0;
+.script-input-panel .input-outer-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
   width: 100%;
-  height: 1.5em;
+}
+
+.script-input-panel .input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: #1e1e1e;
+  border-radius: 8px;
+  border: 1px solid #333;
+  padding: 0 12px;
+  height: 42px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.script-input-panel .input-wrapper:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(38, 166, 154, 0.15);
+}
+
+.script-input-panel .linux-prompt {
+  color: #4caf50;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
   font-size: 1rem;
+  margin-right: 8px;
+  user-select: none;
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
 
-.script-input-panel > label {
-  transform: translateY(-30%);
-  margin-left: 2px;
+.script-input-panel .script-input-field {
+  flex: 1;
+  background: transparent;
+  border: none !important;
+  box-shadow: none !important;
+  color: #e0e0e0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1rem;
+  padding: 0 40px 0 0;
+  margin: 0;
+  outline: none;
+  border-radius: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  caret-color: #fff;
 }
 
-.script-input-panel.input-field > label.active {
-  color: var(--primary-color);
-  transform: translateY(-70%) scale(0.8);
+.script-input-panel .action-buttons {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(45, 45, 45, 0.8);
+  padding: 4px;
+  border-radius: 6px;
+  z-index: 11;
+}
+
+.script-input-panel .divider-vertical {
+  width: 1px;
+  height: 16px;
+  background: #444;
+  margin: 0 2px;
+}
+
+.script-input-panel .action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #888;
+  transition: all 0.2s ease;
+}
+
+.script-input-panel .action-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.script-input-panel .action-button i {
+  font-size: 16px;
+}
+
+.script-input-panel .send-button {
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.script-input-panel .send-button:hover {
+  filter: brightness(1.1);
+}
+
+.script-input-panel .send-button i {
+  font-size: 14px;
 }
 
 @media (max-width: 600px) {

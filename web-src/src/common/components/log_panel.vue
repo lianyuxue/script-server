@@ -39,17 +39,6 @@
         </div>
       </div>
     </div>
-    <div class="panel-buttons" v-if="!isFullscreen">
-      <a class="fullscreen-button btn-icon-flat waves-effect waves-circle" @click="toggleFullscreen" title="全屏查看">
-        <i class="material-icons">fullscreen</i>
-      </a>
-      <a class="copy-text-button btn-icon-flat waves-effect waves-circle" @click="copyLogToClipboard" title="复制日志">
-        <i class="material-icons">content_copy</i>
-      </a>
-      <a class="download-text-button btn-icon-flat waves-effect waves-circle" @click="downloadLog" title="下载日志">
-        <i class="material-icons">file_download</i>
-      </a>
-    </div>
   </div>
 </template>
 
